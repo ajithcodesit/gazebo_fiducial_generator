@@ -7,6 +7,7 @@ The following software dependencies must me met before using this package
 
 - `shuitils` via PyPi
 - `lxml` via PyPi
+- `opencv-python` via PyPi
 - `ar_track_alvar` via ROS
 
 ## Installations
@@ -56,6 +57,15 @@ rosrun gazebo_alvar_model_generator createMarkerModels.py --ids 0-5 --geometry b
 # To create tag models with plane geometry, size 10.0cm (Thickness is not required)
 rosrun gazebo_alvar_model_generator createMarkerModels.py --ids 0-5 --geometry plane --size 10.0
 ```
+
+If a white border needs to be added around the marker, the size of it can be specified using the `--white_border_size` option. The size of the model will
+be automatically adjusted to accomodate the border while keeping the specified tag size.
+
+```bash
+# To create tag models with a white border of size 2.0cm
+rosrun gazebo_alvar_model_generator createMarkerModels.py --ids 0-5 --size 9.0 --thickness 0.01 --white_border_size 2.0
+```
+
 To get all the ALVAR marker images used when creating the SDF model in a separate directory, the `--copy_tag_images` option can be used. This will create a directory called `alvar_tag_images` in the root directory `alvar_markers`, if it is enabled otherwise it will be created in the working directory.
 
 ```bash
@@ -68,9 +78,9 @@ Other options are also available and can be viewed by using the `--help` option.
 ```bash
 rosrun gazebo_alvar_model_generator createMarkerModels.py --help
 usage: createMarkerModels.py [-h] [-i IDS] [-g {box,plane}] [-s SIZE]
-                             [-t THICKNESS] [-o OUTPUTDIR] [-nrd] [-cti]
-                             [-mdv VERSION] [-sdfv SDFVERSION] [-a AUTHOR]
-                             [-v]
+                             [-t THICKNESS] [-wb WHITEBORDERSIZE]
+                             [-o OUTPUTDIR] [-nrd] [-cti] [-mdv VERSION]
+                             [-sdfv SDFVERSION] [-a AUTHOR] [-v]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -81,6 +91,9 @@ optional arguments:
   -s SIZE, --size SIZE  Length and width of the box or plane in cm
   -t THICKNESS, --thickness THICKNESS
                         Thickness of box if it is used as model geometry in cm
+  -wb WHITEBORDERSIZE, --white_border_size WHITEBORDERSIZE
+                        White border to be applied around the marker image in
+                        cm
   -o OUTPUTDIR, --output_dir OUTPUTDIR
                         Directory where the models are saved to. Defaults to
                         current working directory
