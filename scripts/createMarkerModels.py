@@ -11,6 +11,7 @@ parser.add_argument("-i","--ids", type=ParseNumList, action="store", dest="ids",
 parser.add_argument("-g", "--geometry", action="store", dest="geometry", default="box", choices=["box", "plane"], help="Geometry of the marker model")
 parser.add_argument("-s", "--size", type=float, action="store", dest="size", default=9.0, help="Length and width of the box or plane in cm")
 parser.add_argument("-t", "--thickness", type=float, action="store", dest="thickness", default=0.1, help="Thickness of box if it is used as model geometry in cm")
+parser.add_argument("-wb", "--white_border_size", type=float, action="store", dest="whiteBorderSize", default=0.0, help="White border to be applied around the marker image in cm")
 parser.add_argument("-o", "--output_dir", action="store", dest="outputDir", default="./", help="Directory where the models are saved to. Defaults to current working directory")
 parser.add_argument("-nrd", "--no_root_dir", action="store_false", dest="createRootDir", default=True, help="Do not create a root directory for the models to be saved in")
 parser.add_argument("-cti", "--copy_tag_images", action="store_true", dest="createTagImgDir", default=False, help="Copies the tag images used for model creation to a seperate directory")
@@ -24,7 +25,9 @@ if __name__ == '__main__':
     arg = parser.parse_args()
 
     modelCreator = CreateMarkerSDF(idsList=arg.ids, geometry=arg.geometry, size=(arg.size/100.0), 
-                                   thickness=(arg.thickness/100.0), outputDir=arg.outputDir, createRootDir=arg.createRootDir, 
-                                   createTagImgsDir=arg.createTagImgDir, version=arg.version, sdfVersion=arg.sdfVersion, author=arg.author)
+                                   thickness=(arg.thickness/100.0), whiteBorderSize=(arg.whiteBorderSize/100.0),
+                                   outputDir=arg.outputDir, createRootDir=arg.createRootDir, 
+                                   createTagImgsDir=arg.createTagImgDir, version=arg.version, 
+                                   sdfVersion=arg.sdfVersion, author=arg.author)
     
     modelCreator.CreateMarkerModelsInBatches(verbose=arg.verbose)

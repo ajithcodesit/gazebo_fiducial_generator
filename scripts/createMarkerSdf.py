@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import cv2
 import glob
 import time
 import shutil
@@ -17,7 +18,7 @@ from utilities import ProgressBar
 class CreateMarkerSDF:
 
     def __init__(self, idsList, geometry="box", size=0.09, 
-                thickness=0.001, outputDir="./", createRootDir=True, 
+                thickness=0.001, whiteBorderSize=0.01, outputDir="./", createRootDir=True, 
                 createTagImgsDir=True, version=1.0, sdfVersion=1.5, author="User"):
         
         self.idsList = idsList
@@ -28,8 +29,11 @@ class CreateMarkerSDF:
         self.author = author
         
         self.modelGeometry = geometry
-        self.modelSize = size
+        self.whiteBorderSize = whiteBorderSize
+        self.borderColor = [255, 255, 255]
+        self.modelSize = size + (2.0 * self.whiteBorderSize)
         self.modelThickness = thickness
+
         self.markerSize = size
 
         self.modelOutputDir = outputDir
@@ -116,7 +120,7 @@ class CreateMarkerSDF:
             modelPath = os.path.join(os.path.expanduser(outputPath), rootDirPath, markerDir)
 
             markerImgsPath = None
-            if self.creatTagImgsDir is True: # Create firectory for marker images
+            if self.creatTagImgsDir is True: # Create directory for marker images
                 markerImgsPath = os.path.join(os.path.expanduser(outputPath), rootDirPath, self.tagImgsDirName)
                 if not os.path.exists(markerImgsPath):
                     os.makedirs(markerImgsPath)
@@ -133,7 +137,7 @@ class CreateMarkerSDF:
             modifiedModel, textureIdName = self.ModifyModelSDF(markerId, markerDir, self.modelGeometry, self.modelSize, self.modelThickness)
             modifiedModel.write(os.path.join(modelPath, self.modelSdfFilename), pretty_print=True)
 
-            textureFilename = self.AddMarkerTexture(markerId, self.markerSize, materialTexturePath, markerImgsPath)
+            textureFilename = self.AddMarkerTexture(markerId, materialTexturePath, markerImgsPath)
             self.ModifyMaterialScript(textureIdName, textureFilename, materialScriptPath)
 
     def ModifyModelConfig(self, markerId, modelVersion="1.0", sdfVersion="1.5", authorName="User"):
@@ -188,13 +192,19 @@ class CreateMarkerSDF:
         with open(os.path.join(outputPath,self.materialFilename), "w") as modifiedScript:
             modifiedScript.write(modifiedScriptStr)
 
-    def AddMarkerTexture(self, markerId, markerSize, outputPath, imgOutputPath): # All units are in meters
+    def AddMarkerTexture(self, markerId, outputPath, imgOutputPath): # All units are in meters
         
-        command = ["rosrun", "ar_track_alvar", "createMarker", "-ucm", "-s", str(markerSize*100.0), str(markerId)]
+        command = ["rosrun", "ar_track_alvar", "createMarker", "-ucm", "-s", str(self.markerSize*100.0), str(markerId)]
         popen = subprocess.Popen(command, stdout=subprocess.PIPE, cwd=outputPath)
         popen.wait()
 
         markerImgPath = glob.glob(os.path.join(outputPath, "*.png"))[0]
+
+        if self.whiteBorderSize > 0.0:
+            markerImage = cv2.imread(markerImgPath)
+            borderSize = int(self.whiteBorderSize * (markerImage.shape[0]/self.markerSize))
+            markerImageBorder = cv2.copyMakeBorder(markerImage, borderSize, borderSize, borderSize, borderSize, cv2.BORDER_CONSTANT, None, self.borderColor)
+            cv2.imwrite(markerImgPath, markerImageBorder)
         
         if imgOutputPath is not None:
             shutil.copy(markerImgPath, imgOutputPath)
