@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<sdf version="1.5">
+  <model name="ALVAR marker">
+    <static>true</static>
+    <link name="link">
+      <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+      <collision name="collision">
+        <geometry>
+          <!-- Box or plane geometry is used -->
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <!-- Box or plane geometry is used -->
+        </geometry>
+        <material>
+          <script>
+            <name>marker_name</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

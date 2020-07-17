@@ -1,0 +1,13 @@
+material texture_id_name
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture texture_file_name
+      }
+    }
+  }
+}
