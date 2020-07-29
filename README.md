@@ -3,12 +3,14 @@ A ROS package that can be used to generate SDF models for ALVAR augmented realit
 
 ## Dependencies
 
-The following software dependencies must me met before using this package
+The following software dependencies must me met before using this package.
 
 - `shuitils` via PyPi
 - `lxml` via PyPi
 - `opencv-python` via PyPi
 - `ar_track_alvar` via ROS
+
+**This package only works with ROS Melodic Morenia.**
 
 ## Installations
 
