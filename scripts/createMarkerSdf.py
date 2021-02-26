@@ -10,18 +10,18 @@ import subprocess
 from lxml import etree
 from copy import deepcopy
 import concurrent.futures
-from threading import Lock
 
 from utilities import ProgressBar
 
 
 class CreateMarkerSDF:
 
-    def __init__(self, idsList, geometry="box", size=0.09, 
+    def __init__(self, idsList, markerType="aruco", arucoDictNo=7, geometry="box", size=0.09, 
                 thickness=0.001, whiteBorderSize=0.01, outputDir="./", createRootDir=True, 
                 createTagImgsDir=True, version=1.0, sdfVersion=1.5, author="User"):
         
         self.idsList = idsList
+        self.markerType = markerType
         self.maxZeroPadding = len(str(max(idsList)))
 
         self.modelVersion = version
@@ -49,6 +49,9 @@ class CreateMarkerSDF:
         self.rootDirName = "alvar_markers"
         self.tagImgsDirName = "alvar_marker_images"
 
+        # ArUco specific variables
+        self.arucoDictNo = arucoDictNo
+
         r = rospkg.RosPack()
         self.packagePath = r.get_path("gazebo_alvar_model_generator")
         
@@ -58,13 +61,10 @@ class CreateMarkerSDF:
         with open(os.path.join(self.packagePath, "templates/marker.material"), "r") as modelMaterialScript:
             self.materialScript = modelMaterialScript.read()
 
-        self.modelCreationLock = Lock()
-
     def CreateMarkerModelsInBatches(self, verbose=False): # Create multiple models in threads
         
         print("Creating ALVAR marker SDF models")
-        
-        # FIXME: The performance gain is rather low. This caused by using subprocess for marker image creation
+
         startTime = time.time()
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futuresCreatedMarkers = {executor.submit(self.CreateMarkerModel, i, self.modelOutputDir): str(i) for i in self.idsList}
@@ -84,7 +84,7 @@ class CreateMarkerSDF:
         print("Models created in: %s" % (endTime-startTime))
         print("SDF models creation completed")
 
-    # TODO: This needs to be removed as this is mainly used for testing
+    # This is used for testing purposes
     def CreateMarkerModels(self, verbose=False): # Creates multiple SDF models
         
         print("Creating ALVAR marker SDF models")
@@ -107,38 +107,36 @@ class CreateMarkerSDF:
 
     def CreateMarkerModel(self, markerId, outputPath): # Creates a single SDF model
 
-        with self.modelCreationLock:
+        rootDirPath = "./"
+        if self.createRootDir is True: 
+            rootDirPath = self.rootDirName # All the models will be put into this directory
 
-            rootDirPath = "./"
-            if self.createRootDir is True: 
-                rootDirPath = self.rootDirName # All the models will be put into this directory
+        if outputPath is None:
+            outputPath = "./" # The directory in which the models should be placed
+        
+        markerDir = self.markerDirName+str(markerId)
+        modelPath = os.path.join(os.path.expanduser(outputPath), rootDirPath, markerDir)
 
-            if outputPath is None:
-                outputPath = "./" # The directory in which the models should be placed
-            
-            markerDir = self.markerDirName+str(markerId)
-            modelPath = os.path.join(os.path.expanduser(outputPath), rootDirPath, markerDir)
+        markerImgsPath = None
+        if self.creatTagImgsDir is True: # Create directory for marker images
+            markerImgsPath = os.path.join(os.path.expanduser(outputPath), rootDirPath, self.tagImgsDirName)
+            if not os.path.exists(markerImgsPath):
+                os.makedirs(markerImgsPath)
 
-            markerImgsPath = None
-            if self.creatTagImgsDir is True: # Create directory for marker images
-                markerImgsPath = os.path.join(os.path.expanduser(outputPath), rootDirPath, self.tagImgsDirName)
-                if not os.path.exists(markerImgsPath):
-                    os.makedirs(markerImgsPath)
+        materialScriptPath = os.path.join(modelPath, "materials/scripts")
+        materialTexturePath = os.path.join(modelPath, "materials/textures")
 
-            materialScriptPath = os.path.join(modelPath, "materials/scripts")
-            materialTexturePath = os.path.join(modelPath, "materials/textures")
+        os.makedirs(materialScriptPath)
+        os.makedirs(materialTexturePath)
 
-            os.makedirs(materialScriptPath)
-            os.makedirs(materialTexturePath)
+        modifiedModelConfig = self.ModifyModelConfig(markerId, self.modelVersion, self.sdfVersion, self.author)
+        modifiedModelConfig.write(os.path.join(modelPath, self.modelConfigFilename), pretty_print=True)
 
-            modifiedModelConfig = self.ModifyModelConfig(markerId, self.modelVersion, self.sdfVersion, self.author)
-            modifiedModelConfig.write(os.path.join(modelPath, self.modelConfigFilename), pretty_print=True)
+        modifiedModel, textureIdName = self.ModifyModelSDF(markerId, markerDir, self.modelGeometry, self.modelSize, self.modelThickness)
+        modifiedModel.write(os.path.join(modelPath, self.modelSdfFilename), pretty_print=True)
 
-            modifiedModel, textureIdName = self.ModifyModelSDF(markerId, markerDir, self.modelGeometry, self.modelSize, self.modelThickness)
-            modifiedModel.write(os.path.join(modelPath, self.modelSdfFilename), pretty_print=True)
-
-            textureFilename = self.AddMarkerTexture(markerId, materialTexturePath, markerImgsPath)
-            self.ModifyMaterialScript(textureIdName, textureFilename, materialScriptPath)
+        textureFilename = self.AddMarkerTexture(markerId, materialTexturePath, markerImgsPath)
+        self.ModifyMaterialScript(textureIdName, textureFilename, materialScriptPath)
 
     def ModifyModelConfig(self, markerId, modelVersion="1.0", sdfVersion="1.5", authorName="User"):
 
@@ -193,7 +191,15 @@ class CreateMarkerSDF:
             modifiedScript.write(modifiedScriptStr)
 
     def AddMarkerTexture(self, markerId, outputPath, imgOutputPath): # All units are in meters
-        
+
+        if self.markerType == "aruco":
+            return self.CreateArucoMarkerTexture(markerId, outputPath, imgOutputPath) # Returns the file name of marker image
+        elif self.markerType == "alvar":
+            return self.CreateALVARMarkerTexture(markerId, outputPath, imgOutputPath)
+
+    def CreateALVARMarkerTexture(self, markerId, outputPath, imgOutputPath):
+
+        # TODO: The performance is rather low for ALVAR markers because of the use of subprocess for marker image creation
         command = ["rosrun", "ar_track_alvar", "createMarker", "-ucm", "-s", str(self.markerSize*100.0), str(markerId)]
         popen = subprocess.Popen(command, stdout=subprocess.PIPE, cwd=outputPath)
         popen.wait()
@@ -202,8 +208,7 @@ class CreateMarkerSDF:
 
         if self.whiteBorderSize > 0.0:
             markerImage = cv2.imread(markerImgPath)
-            borderSize = int(self.whiteBorderSize * (markerImage.shape[0]/self.markerSize))
-            markerImageBorder = cv2.copyMakeBorder(markerImage, borderSize, borderSize, borderSize, borderSize, cv2.BORDER_CONSTANT, None, self.borderColor)
+            markerImageBorder = self.AddWhiteBorders(markerImage)
             cv2.imwrite(markerImgPath, markerImageBorder)
         
         if imgOutputPath is not None:
@@ -212,6 +217,32 @@ class CreateMarkerSDF:
         fileName = os.path.basename(markerImgPath) # Only the first file is considered
         
         return fileName
+
+    def CreateArucoMarkerTexture(self, markerId, outputPath, imgOutputPath):
+        
+        fileName = "marker%d.png" % markerId
+
+        # Convert the marker and border size in meters to pixels
+        sizeInPixels = int(2000.0 * (self.markerSize/0.14))
+
+        aruco_dict = cv2.aruco.Dictionary_get(self.arucoDictNo)
+        markerImage = cv2.aruco.drawMarker(aruco_dict, markerId, sizeInPixels)
+
+        if self.whiteBorderSize > 0.0:
+           markerImage = self.AddWhiteBorders(markerImage)
+
+        cv2.imwrite(os.path.join(outputPath, fileName), markerImage)
+
+        if imgOutputPath is not None: # Used for saving the marker image in a separate directory
+            cv2.imwrite(os.path.join(imgOutputPath, fileName), markerImage)
+
+        return fileName
+
+    def AddWhiteBorders(self, image):
+
+        borderSize = int(self.whiteBorderSize * (image.shape[0]/self.markerSize))
+
+        return cv2.copyMakeBorder(image, borderSize, borderSize, borderSize, borderSize, cv2.BORDER_CONSTANT, None, self.borderColor)
 
     @staticmethod
     def AddBoxGeometry(w, l, h): # All units are in meters
