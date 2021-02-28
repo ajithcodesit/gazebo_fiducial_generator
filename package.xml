@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>gazebo_alvar_model_generator</name>
+  <name>gazebo_fiducial_generator</name>
   <version>1.0.0</version>
-  <description>A package for creating Gazebo SDF models of ALVAR augmented reality tags</description>
+  <description>A package for creating fiducial marker SDF models for Gazebo</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/gazebo_alvar_model_generator</url> -->
+  <!-- <url type="website">http://wiki.ros.org/gazebo_fiducial_generator</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
