@@ -40,14 +40,14 @@ class CreateMarkerSDF:
         self.createRootDir = createRootDir
         self.creatTagImgsDir = createTagImgsDir 
 
-        self.markerDirName="alvar_marker_"
+        self.markerDirName="marker_"
         self.modelConfigFilename="model.config"
         self.modelSdfFilename = "model.sdf"
         self.materialFilename = "marker.material"
-        self.markerModelName = "ALVAR marker ID-"
-        self.textureName = "alvar_marker_id_"
-        self.rootDirName = "alvar_markers"
-        self.tagImgsDirName = "alvar_marker_images"
+        self.markerModelName = "Marker ID-"
+        self.textureName = "marker_id_"
+        self.rootDirName = self.markerType+"_markers"
+        self.tagImgsDirName = self.markerType+"_marker_images"
 
         # ArUco specific variables
         self.arucoDictNo = arucoDictNo
@@ -63,7 +63,7 @@ class CreateMarkerSDF:
 
     def CreateMarkerModelsInBatches(self, verbose=False): # Create multiple models in threads
         
-        print("Creating ALVAR marker SDF models")
+        print("Creating fiducial marker SDF models")
 
         startTime = time.time()
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
@@ -87,7 +87,7 @@ class CreateMarkerSDF:
     # This is used for testing purposes
     def CreateMarkerModels(self, verbose=False): # Creates multiple SDF models
         
-        print("Creating ALVAR marker SDF models")
+        print("Creating fiducial marker SDF models")
 
         startTime = time.time()
         creationProgress = ProgressBar(len(self.idsList))
@@ -121,7 +121,10 @@ class CreateMarkerSDF:
         if self.creatTagImgsDir is True: # Create directory for marker images
             markerImgsPath = os.path.join(os.path.expanduser(outputPath), rootDirPath, self.tagImgsDirName)
             if not os.path.exists(markerImgsPath):
-                os.makedirs(markerImgsPath)
+                try:
+                    os.makedirs(markerImgsPath)
+                except FileExistsError:
+                    print("Marker image file path already exists")
 
         materialScriptPath = os.path.join(modelPath, "materials/scripts")
         materialTexturePath = os.path.join(modelPath, "materials/textures")
