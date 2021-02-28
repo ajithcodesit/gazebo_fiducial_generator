@@ -8,10 +8,9 @@ from utilities import ParseNumList
 parser = argparse.ArgumentParser()
 
 # Common arguments
-parser.add_argument("-i", "--ids", type=ParseNumList, action="store", dest="ids", help="Required marker IDs in the form '2', '1-5' or '10,12,15'. Maximum number depends on marker type")
+parser.add_argument("-i", "--ids", type=ParseNumList, action="store", dest="ids", default="0", help="Required marker IDs in the form '2', '1-5' or '10,12,15'. Maximum number depends on marker type")
 parser.add_argument("-mt", "--marker_type", action="store", dest="markerType", default="aruco", choices=["aruco", "alvar"], help="The type of marker to be generated for creating the SDF models")
-parser.add_argument("-d" "--dictionary", type=int, action="store", dest="dictionary", default=7, help="The dictionary to use for creating markers if ArUco is selected")
-parser.add_argument("-g", "--geometry", action="store", dest="geometry", default="box", choices=["box", "plane"], help="Geometry of the marker model")
+parser.add_argument("-g",  "--geometry", action="store", dest="geometry", default="box", choices=["box", "plane"], help="Geometry of the marker model")
 parser.add_argument("-s", "--size", type=float, action="store", dest="size", default=9.0, help="Length and width of the box or plane in cm")
 parser.add_argument("-t", "--thickness", type=float, action="store", dest="thickness", default=0.1, help="Thickness of box if it is used as model geometry in cm")
 parser.add_argument("-wb", "--white_border_size", type=float, action="store", dest="whiteBorderSize", default=0.0, help="White border to be applied around the marker image in cm")
@@ -23,6 +22,8 @@ parser.add_argument("-sdfv", "--sdf_version", type=float, action="store", dest="
 parser.add_argument("-a", "--author", action="store", dest="author", default="User", help="Name of the author for the model")
 parser.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False, help="Verbose output during model creation")
 
+arucoGroup = parser.add_argument_group('ArUco marker specific arguments')
+arucoGroup.add_argument("-d", "--dictionary", type=int, action="store", dest="dictionary", default=7, help="The dictionary to use for creating markers if ArUco is selected")
 
 if __name__ == '__main__':
     
