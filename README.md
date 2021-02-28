@@ -1,4 +1,4 @@
-# **Gazebo fiducial model generator**
+# **Gazebo Fiducial Generator**
 A ROS package that can be used to generate SDF models for fiducial markers. This is more of a helper package to create large amount of SDF marker models with relative ease which can be used in robotic simulation software like Gazebo.
 
 ## Dependencies
