@@ -1,3 +1,4 @@
 shutils
 lxml
 opencv-python
+opencv-contrib-python
