@@ -53,7 +53,7 @@ class CreateMarkerSDF:
         self.arucoDictNo = arucoDictNo
 
         r = rospkg.RosPack()
-        self.packagePath = r.get_path("gazebo_alvar_model_generator")
+        self.packagePath = r.get_path("gazebo_fiducial_generator")
         
         self.modelConfig = etree.parse(os.path.join(self.packagePath, "templates/model.config"))
         self.model = etree.parse(os.path.join(self.packagePath, "templates/model.sdf"))
