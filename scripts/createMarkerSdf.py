@@ -228,8 +228,8 @@ class CreateMarkerSDF:
         # Convert the marker and border size in meters to pixels
         sizeInPixels = int(2000.0 * (self.markerSize/0.14))
 
-        aruco_dict = cv2.aruco.Dictionary_get(self.arucoDictNo)
-        markerImage = cv2.aruco.drawMarker(aruco_dict, markerId, sizeInPixels)
+        aruco_dict = cv2.aruco.getPredefinedDictionary(self.arucoDictNo)
+        markerImage = cv2.aruco.generateImageMarker(aruco_dict, markerId, sizeInPixels)
 
         if self.whiteBorderSize > 0.0:
            markerImage = self.AddWhiteBorders(markerImage)
